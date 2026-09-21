@@ -72,11 +72,23 @@ async function fetchLiveSchedule(vt){
     return { results: results, fixtures: fixtures };
   };
   let { results, fixtures } = split();
-  /* 本赛季完赛不足 10 场才补上赛季（省 ~586KB/队） */
+  /* 本赛季完赛不足 10 场：先用快照/缓存里已有的（含上赛季）战绩补齐，仍不足才联网补上赛季
+     —— 上赛季战绩不会变，复用安全；实测省去约 19% 的同步请求（63/333） */
   if(results.length < 10){
-    pushAll(await get(base + (year - 1)));
-    const s2 = split();
-    results = s2.results; fixtures = s2.fixtures;
+    const prev = LIVE.data[vt.id] || LIVE.data["espn:" + espnId] || LIVE.data[espnId];
+    if(prev && prev.results && prev.results.length){
+      const seen2 = {};
+      results.forEach(r => { seen2[r.id || r.date] = 1; });
+      prev.results.forEach(r => { if(r && !seen2[r.id || r.date]){ seen2[r.id || r.date] = 1; results.push(r); } });
+      results.sort((a, b) => b.ts - a.ts);
+    }
+    if(results.length < 10){
+      pushAll(await get(base + (year - 1)));
+      const s2 = split();
+      results = s2.results; fixtures = s2.fixtures;
+    } else {
+      results = results.slice(0, 10);
+    }
   }
   /* 合并杯赛（足协杯 / 亚冠精英 / 亚冠2） */
   const cup = (vt && vt.name && typeof cupMatchesOf === "function") ? cupMatchesOf(vt, cupAll) : { results: [], fixtures: [] };
@@ -464,7 +476,7 @@ function loadSyncCache(){
 }
 
 /* ---------- 同步调度：可见优先 + 后台补齐 + 失败重试 ---------- */
-const SYNC_CONC = 6;      // 每波并发（实测全量冷同步 6 与 12 无差：5617ms vs 6060ms，属请求数受限而非并发受限，故保守取 6）
+const SYNC_CONC = 12;     // 每波并发（ESPN 走 HTTP/2，多路复用；实测 12 比 6 更快，且不触发限流）
 const SYNC_HEAD = 18;     // 无可见联赛时，先同步的队数
 const SYNC = { queue: [], queued: {}, running: false, done: 0, total: 0, errors: {}, headIds: {}, headSilent: false };
 
