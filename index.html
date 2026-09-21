@@ -861,6 +861,12 @@
   .news-item-foot{display:flex;align-items:center;gap:var(--s2);flex-wrap:wrap}
   .news-team{font-size:12px;font-weight:600;color:var(--slate);border:1px solid var(--line);border-radius:999px;padding:var(--s1) var(--s2)}
   .news-item-foot .news-meta{margin-left:auto}
+  /* ---------- 水印字标「h1×」（可复用：.wm 基类 + 变体，加在任意位置） ---------- */
+  .wm{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:32px;height:32px;border-radius:50%;border:1.2px solid currentColor;font-family:"Barlow Condensed",Barlow,sans-serif;font-weight:700;font-size:14px;letter-spacing:.02em;line-height:1;color:var(--ink);user-select:none}
+  .wm--plain{border:none;width:auto;height:auto;font-size:14px}
+  .wm--faint{opacity:.10}
+  .wm--badge{position:fixed;right:14px;bottom:14px;z-index:45;opacity:.28;pointer-events:none}
+  .wm--footer{width:26px;height:26px;border-width:1px;font-size:12px;color:var(--slate2);opacity:.8;margin-bottom:var(--s2);vertical-align:middle}
   /* ---------- 手机端（≤480px）：精修排版 ---------- */
   @media (max-width:480px){
     /* 顶栏：品牌 + 语言键，收紧间距；信息徽标在窄屏隐藏（同步条已重复该信息） */
@@ -909,6 +915,7 @@
     .news-title{font-size:14.5px}
     .live-bar{flex-wrap:wrap;gap:var(--s2);font-size:13px;padding:var(--s2) var(--s3)}
     .lightbox{padding:var(--s3)}
+    .wm--badge{display:none}
     /* 战绩摘要 / 对比页近况条：收紧，避免 320px 窄屏溢出内边距 */
     .summary{gap:var(--s3);padding:var(--s3) var(--s3)}
     .sum-item{min-width:0}
@@ -1023,6 +1030,7 @@
 </main>
 
 <footer>
+  <span class="wm wm--footer" aria-hidden="true">h1×</span><br>
   FootyDex · 示例演示页面，球队 / 球员 / 赛程数据为示意用途，请以官方信息为准。<br>
   球场照片来自 Wikimedia Commons（自由授权，已逐张标注作者与协议）；球员头像为俱乐部官方定妆照，队徽与定妆照版权归各俱乐部 / 联赛所有，仅供演示；地图定位来自百度地图。
 </footer>
@@ -1030,6 +1038,8 @@
 <div class="lightbox" id="lightbox" hidden>
   <figure id="lightbox-body"></figure>
 </div>
+
+<div class="wm wm--badge" aria-hidden="true">h1×</div>
 
 <script>
 /* 中文名词典（ESPN 实时数据的本地翻译表）
