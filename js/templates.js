@@ -52,7 +52,7 @@ function playerRowHTML(p){
   return '<tr class="expandable" data-pl="' + esc(p.id) + '">' +
     '<td><span class="pno">' + (p.no || "-") + '</span></td>' +
     '<td><div class="pname">' + '<span class="pavatar">' + (p.no || "—") + '</span>' + esc(isEN() ? (p.en || p.name) : (p.name || p.en)) + '</div></td>' +
-    '<td><span class="nat-cell">' + (flagOf(p) ? '<img class="nat-flag" src="' + esc(flagOf(p)) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">' : '') + esc(dNat(p.nat) || "-") + '</span></td>' +
+    '<td><span class="nat-cell">' + (flagOf(p) ? '<img class="nat-flag" src="' + esc(crestSrc(flagOf(p), 24)) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">' : '') + esc(dNat(p.nat) || "-") + '</span></td>' +
     '<td>' + (p.age || "-") + '</td>' +
     '<td><span class="pos pos-' + esc(p.pos) + '">' + esc(dPos(p.pos)) + '</span></td>' +
     '<td class="num">' + p.ap + '</td><td class="num">' + p.g + '</td><td class="num">' + p.as + '</td>' +
@@ -366,8 +366,16 @@ function crestFallbackSVG(t){
     '<text x="50" y="59" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="26" font-weight="700" fill="#ffffff">' + t.initials + '</text>' +
     '</svg>');
 }
+/* ESPN 队徽原图是 500px PNG（实测约 130KB/张），而页面只显示 20–110px
+   → 统一走 ESPN combiner 按显示尺寸取小图（2× 供视网膜屏，封顶 100px），约 3–5KB（省约 96%）
+   本地队徽（crests/…）与其它来源原样返回 */
+function crestSrc(src, size){
+  if(!src || src.indexOf("a.espncdn.com/i/") < 0) return src;
+  const px = Math.min(100, Math.max(24, Math.round((size || 24) * 2)));
+  return "https://a.espncdn.com/combiner/i?img=" + encodeURIComponent(src.replace(/^https?:\/\/a\.espncdn\.com/, "")) + "&w=" + px + "&h=" + px;
+}
 function crestImgHTML(o){
-  return '<img class="crest-img" src="' + o.src + '" width="' + o.size + '" height="' + o.size + '" alt="' + esc(o.alt) + '"' +
+  return '<img class="crest-img" src="' + crestSrc(o.src, o.size) + '" width="' + o.size + '" height="' + o.size + '" alt="' + esc(o.alt) + '"' +
     (o.lazy ? ' loading="lazy" decoding="async"' : '') +
     ' onerror="' + (o.fallbackSVG ? "this.onerror=null;this.src='" + o.fallbackSVG + "'" : "this.style.visibility='hidden'") + '">';
 }
@@ -697,7 +705,7 @@ function matchDetailHTML(d){
   if(d.empty) return '<div class="match-detail">' + emptyNoteHTML("暂无该场比赛详情。", "No match details available.") + '</div>';
   const sc = (d.score && d.score.home && d.score.home.name && d.score.away && d.score.away.name) ? d.score : null;
   const team = x => '<div class="md-team' + (x.our ? ' md-our' : '') + '">' +
-    (x.logo ? '<img src="' + x.logo + '" alt="" loading="lazy" decoding="async" onerror="this.style.visibility=\'hidden\'">' : '') +
+    (x.logo ? '<img src="' + crestSrc(x.logo, 40) + '" alt="" loading="lazy" decoding="async" onerror="this.style.visibility=\'hidden\'">' : '') +
     '<b>' + x.name + '</b></div>';
   return '<div class="match-detail"><div class="md-inner">' +
     (sc ? '<div class="md-score">' + team(sc.home) +
@@ -1202,7 +1210,7 @@ function playerPageHTML(e){
     e.pos ? dPos(e.pos) : "", e.age ? L(e.age + " 岁", e.age + " yrs") : ""
   ].filter(Boolean);
   const flagChip = e.nat ? '<span class="chip pl-flag-chip">' +
-    (flagOf(e) ? '<img src="' + esc(flagOf(e)) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">' : "") + esc(dNat(e.nat)) + '</span>' : "";
+          (flagOf(e) ? '<img src="' + esc(crestSrc(flagOf(e), 24)) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">' : "") + esc(dNat(e.nat)) + '</span>' : "";
   const chipsHTML = meta.map(m => '<span class="chip">' + esc(m) + '</span>').join("") + flagChip;
   return '<button class="back" id="player-back">' + L("← 返回全部球队", "← All clubs") + '</button>' +
     '<div class="player-hero">' +
